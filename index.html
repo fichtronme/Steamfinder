@@ -48,13 +48,13 @@
         <section id="view-login" class="max-w-md mx-auto py-10">
             <div class="text-center mb-10">
                 <h2 class="text-5xl font-black text-white italic uppercase tracking-tighter mb-4">Find your <br><span class="text-sky-500">Gaming Family</span></h2>
-                <p class="text-gray-400 text-sm">The world's first automated matchmaking system for Steam Family Sharing.</p>
+                <p class="text-gray-400 text-sm">Join the network for Steam Family Sharing. Connect libraries and play for free.</p>
             </div>
 
             <div class="steam-card p-8 shadow-2xl space-y-6">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black uppercase text-sky-500 tracking-widest">Enter SteamID64</label>
-                    <input id="steam-id-input" type="text" placeholder="7656119xxxxxxxxxx" class="w-full steam-input text-lg font-mono">
+                    <input id="steam-id-input" type="text" placeholder="e.g. 7656119xxxxxxxxxx" class="w-full steam-input text-lg font-mono">
                 </div>
                 
                 <button id="btn-load" onclick="handleLogin()" class="btn-accent w-full text-lg">Load My Library</button>
@@ -62,16 +62,17 @@
                 <div class="bg-black/40 p-5 rounded-lg border border-white/5 space-y-4">
                     <h3 class="text-xs font-black uppercase text-white/50 tracking-widest flex items-center gap-2">
                         <span class="bg-sky-500 text-black w-4 h-4 rounded-full flex items-center justify-center text-[10px]">?</span>
-                        How to find your ID?
+                        How to find your Steam ID?
                     </h3>
-                    <div class="text-[11px] text-gray-400 space-y-3">
-                        <p>1. Go to your <b>Steam Profile</b> page.</p>
-                        <p>2. Right-click anywhere and select <b>"Copy Page URL"</b>.</p>
-                        <p>3. Paste the URL into <b><a href="https://steamid.io" target="_blank" class="text-sky-400 underline hover:text-white">steamid.io</a></b> to get your <b>ID64</b>.</p>
+                    <div class="text-[11px] text-gray-400 space-y-3 leading-relaxed">
+                        <p>1. Open the <b>Steam App</b> on your PC.</p>
+                        <p>2. Click your <b>Profile Name</b> in the top right corner.</p>
+                        <p>3. Select <b>"Account Details"</b> from the menu.</p>
+                        <p>4. Your <b>Steam ID</b> is listed in gray directly under your name.</p>
                     </div>
                     <div class="pt-2 border-t border-white/5">
-                        <a href="https://www.youtube.com/watch?v=mYpXF_P_N3E" target="_blank" class="text-[10px] font-black text-sky-500 hover:underline flex items-center gap-1">
-                            WATCH VISUAL VIDEO GUIDE ➔
+                        <a href="https://youtu.be/Wk9DBwkkbR0" target="_blank" class="text-[10px] font-black text-sky-500 hover:underline flex items-center gap-1 uppercase tracking-tighter">
+                            Watch step-by-step video ➔
                         </a>
                     </div>
                 </div>
@@ -79,8 +80,11 @@
         </section>
 
         <section id="view-dashboard" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
             <div class="lg:col-span-1 space-y-6">
+                <div class="steam-card p-6 text-center" id="user-avatar-placeholder">
+                    <div class="w-24 h-24 bg-sky-900/50 rounded-full mx-auto mb-4 border-2 border-sky-500 flex items-center justify-center text-3xl font-black text-sky-500">?</div>
+                    <h3 id="profile-name-ui" class="text-white font-bold">Steam User</h3>
+                </div>
                 <div class="steam-card p-6">
                     <h3 class="text-[10px] font-black uppercase text-sky-500 mb-4 tracking-widest">My Shared Library</h3>
                     <div id="owned-games-list" class="space-y-1 text-xs max-h-[450px] overflow-y-auto pr-2">
@@ -102,10 +106,7 @@
                 <div class="space-y-4">
                     <h3 class="text-[10px] font-black uppercase text-white/40 tracking-widest">Active Matchmaking Requests</h3>
                     <div id="requests-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="steam-card p-10 text-center opacity-40 italic text-sm">
-                            Searching for active families in your region...
                         </div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -119,60 +120,49 @@
                     </div>
                     <button onclick="closeChat()" class="text-2xl opacity-50 hover:opacity-100 transition">✕</button>
                 </div>
-                <div id="chat-box" class="flex-grow p-6 overflow-y-auto flex flex-col gap-3 text-sm">
-                    <div class="bg-sky-500/10 text-sky-400 p-3 rounded text-[11px] text-center uppercase font-bold tracking-tighter">
-                        Safe Tip: Never share your Steam password. Only use the official Steam Family invite system.
-                    </div>
-                </div>
+                <div id="chat-box" class="flex-grow p-6 overflow-y-auto flex flex-col gap-3 text-sm"></div>
                 <div class="p-4 bg-black/40 flex gap-2">
                     <input id="chat-msg-input" type="text" placeholder="Propose a deal..." class="steam-input flex-grow">
                     <button onclick="sendChatMessage()" class="btn-accent px-8">Send</button>
                 </div>
             </div>
         </div>
-
     </main>
 
     <script>
-        /* --- CONFIGURATION & STATE --- */
         let myId = null;
-        let myGames = [];
-        let peer, conn;
 
-        /* --- LOGIN & STEAM DATA --- */
         async function handleLogin() {
             const inputId = document.getElementById('steam-id-input').value.trim();
             if (inputId.length < 15) return alert("Please enter a valid 17-digit SteamID64.");
 
             const btn = document.getElementById('btn-load');
-            btn.innerText = "Accessing Steam...";
+            btn.innerText = "Connecting to Steam API...";
             btn.disabled = true;
 
             myId = inputId;
 
-            // Note: Since browsers block direct Steam API calls, we simulate loading.
-            // In the production version with Firebase, this will be a real fetch.
+            // SIMULATION: Since we don't have a backend yet, we simulate a loading process
             setTimeout(() => {
-                // UI SWITCH
                 document.getElementById('view-login').classList.add('hidden');
                 document.getElementById('view-dashboard').classList.remove('hidden');
                 document.getElementById('user-status').classList.remove('hidden');
-                document.getElementById('display-name').innerText = "User: " + myId;
+                document.getElementById('display-name').innerText = "ID: " + myId;
+                document.getElementById('profile-name-ui').innerText = "User " + myId.substring(0, 5);
 
-                // MOCK DATA FOR DEMO
-                myGames = ["Black Myth: Wukong", "Elden Ring", "Rust", "Cyberpunk 2077", "Counter-Strike 2"];
-                renderLibrary(myGames);
+                // Sample Games (This will be replaced by real data when backend is ready)
+                const mockGames = ["Elden Ring", "Cyberpunk 2077", "Rust", "Hogwarts Legacy", "Counter-Strike 2"];
+                renderLibrary(mockGames);
                 renderMockRequests();
-            }, 1200);
+            }, 1500);
         }
 
-        /* --- UI RENDERING --- */
         function renderLibrary(games) {
             const container = document.getElementById('owned-games-list');
             container.innerHTML = games.map(g => `
-                <div class="p-2 bg-white/5 border border-white/5 rounded flex justify-between items-center group hover:border-sky-500/30 transition">
+                <div class="p-2 bg-white/5 border border-white/5 rounded flex justify-between items-center group hover:border-sky-500/30 transition mb-1">
                     <span class="truncate">${g}</span>
-                    <span class="text-[8px] font-black text-sky-500 uppercase opacity-40 group-hover:opacity-100">Ready</span>
+                    <span class="text-[8px] font-black text-sky-500 uppercase opacity-40">Ready</span>
                 </div>
             `).join('');
         }
@@ -181,57 +171,47 @@
             const grid = document.getElementById('requests-grid');
             const mockData = [
                 { id: "76561198034...", has: "Elden Ring", wants: "Black Myth: Wukong" },
-                { id: "76561198211...", has: "Baldur's Gate 3", wants: "Any AAA Title" }
+                { id: "76561198211...", has: "Baldur's Gate 3", wants: "Cyberpunk" }
             ];
 
             grid.innerHTML = mockData.map(req => `
                 <div class="steam-card p-6 border-white/5 hover:border-sky-500/50 transition flex flex-col justify-between">
-                    <div class="mb-4">
+                    <div>
                         <div class="flex justify-between items-start mb-2">
-                            <span class="text-[10px] font-black text-sky-500 uppercase tracking-widest">Library Swap</span>
-                            <span class="text-[9px] text-green-500 font-bold italic">Region Match</span>
+                            <span class="text-[10px] font-black text-sky-500 uppercase tracking-widest">Swap Request</span>
+                            <span class="text-[9px] text-green-500 font-bold italic">Online</span>
                         </div>
                         <p class="text-white font-bold text-sm">Has: <span class="text-gray-400 font-normal">${req.has}</span></p>
                         <p class="text-white font-bold text-sm">Wants: <span class="text-sky-400 font-normal">${req.wants}</span></p>
                     </div>
-                    <button onclick="initiateNegotiation('${req.id}')" class="bg-white/5 hover:bg-white/10 text-white text-[10px] font-black py-2 rounded uppercase transition tracking-widest">
-                        Negotiate Swap
-                    </button>
+                    <button onclick="openChat('${req.id}')" class="mt-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black py-2 rounded uppercase tracking-widest transition">Negotiate</button>
                 </div>
             `).join('');
         }
 
-        /* --- MATCHMAKING LOGIC --- */
         function postRequest() {
             const val = document.getElementById('game-request-input').value.trim();
             if (!val) return;
-
-            alert(`Request for "${val}" posted! While the site is new, your request will stay in our global queue.`);
+            alert(`Global request for "${val}" has been posted! Matching for your SteamID.`);
             document.getElementById('game-request-input').value = "";
         }
 
-        /* --- P2P CHAT LOGIC --- */
-        function initiateNegotiation(targetId) {
+        function openChat(id) {
             document.getElementById('chat-modal').classList.remove('hidden');
-            document.getElementById('chat-target-id').innerText = "Connecting to peer: " + targetId;
-            // PeerJS logic would go here to connect with the user
+            document.getElementById('chat-target-id').innerText = "PEER: " + id;
         }
 
-        function closeChat() {
-            document.getElementById('chat-modal').classList.add('hidden');
-        }
+        function closeChat() { document.getElementById('chat-modal').classList.add('hidden'); }
 
         function sendChatMessage() {
             const input = document.getElementById('chat-msg-input');
             const val = input.value.trim();
             if (!val) return;
-
             const box = document.getElementById('chat-box');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = "self-end bg-sky-600 text-white px-4 py-2 rounded-lg max-w-[80%]";
-            msgDiv.innerText = val;
-            box.appendChild(msgDiv);
-            
+            const msg = document.createElement('div');
+            msg.className = "self-end bg-sky-600 text-white px-4 py-2 rounded-lg max-w-[80%]";
+            msg.innerText = val;
+            box.appendChild(msg);
             input.value = "";
             box.scrollTop = box.scrollHeight;
         }
