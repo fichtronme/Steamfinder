@@ -1,137 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteamFamily Finder</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root { --s-dark: #171a21; --s-blue: #1b2838; --s-accent: #66c0f4; }
-        body { background-color: var(--s-dark); color: #c7d5e0; font-family: 'Inter', sans-serif; }
-        .steam-card { background: #1b2838; border: 1px solid rgba(102,192,244,0.1); border-radius: 4px; }
-        .btn-main { background: var(--s-accent); color: #171a21; font-weight: 900; text-transform: uppercase; transition: 0.2s; }
-        .btn-main:hover { filter: brightness(1.1); transform: scale(1.02); }
-        .game-card { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; text-align: center; }
-        .game-card:hover { border-color: var(--s-accent); }
-        .hidden { display: none !important; }
-    </style>
-</head>
-<body>
+<script>
+    // TVŮJ KONFIGURAČNÍ MODUL
+    const API_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
+    const proxy = "https://api.allorigins.win/get?url=";
 
-    <nav class="border-b border-white/5 bg-[#1b2838]/90 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-black text-white cursor-pointer" onclick="location.reload()">STEAM<span class="text-sky-500">FAMILY</span></h1>
-            <div id="nav-links" class="hidden flex gap-6 text-[10px] font-black uppercase tracking-widest text-white">
-                <button onclick="showPage('library')">Knihovna</button>
-                <button onclick="showPage('market')">Marketplace</button>
-            </div>
-        </div>
-    </nav>
+    // --- MODULE: ROUTING ---
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.getElementById('page-' + pageId).classList.remove('hidden');
+    }
 
-    <main class="max-w-6xl mx-auto p-6">
-        <div id="page-auth" class="max-w-md mx-auto py-20">
-            <div class="steam-card p-8 space-y-6 shadow-2xl">
-                <h2 class="text-xl font-bold text-white uppercase text-center italic">Propojit knihovnu</h2>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-sky-500">Zadej SteamID64</label>
-                    <input id="steam-id-input" type="text" placeholder="7656119XXXXXXXXXX" class="w-full bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500">
-                </div>
-                <button id="auth-btn" onclick="handleLogin()" class="btn-main w-full py-3">Načíst hry</button>
-                <div class="bg-black/20 p-4 rounded text-[11px] text-gray-400">
-                    <p class="text-sky-500 font-bold mb-1">DŮLEŽITÉ:</p>
-                    Profil i "Detaily o hrách" musí být nastaveny jako <b>Veřejné</b> v nastavení soukromí Steamu.
-                </div>
-            </div>
-        </div>
+    // --- MODULE: AUTH & REAL LOADING ---
+    async function handleLogin() {
+        const steamId = document.getElementById('steam-id-input').value.trim();
+        if (steamId.length < 15) return alert("Prosím zadej platné 17-místné SteamID64");
 
-        <div id="page-library" class="hidden">
-            <div class="flex justify-between items-end mb-8">
-                <h2 class="text-2xl font-black text-white uppercase italic">Moje hry ke sdílení</h2>
-                <span id="game-count" class="text-sky-500 text-xs font-bold tracking-widest">0 HER NAJEDNO</span>
-            </div>
-            <div id="library-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
-        </div>
+        const btn = document.getElementById('auth-btn');
+        btn.innerText = "Skenuji Steam...";
+        btn.disabled = true;
 
-        <div id="page-market" class="hidden">
-            <div class="steam-card p-6 mb-8 border-sky-500/20">
-                <h2 class="text-xl font-bold text-white mb-4 italic uppercase">Hledat ve skupině</h2>
-                <div class="flex gap-3">
-                    <input id="search-input" type="text" placeholder="Jakou hru hledáš?" class="flex-grow bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none">
-                    <button class="btn-main px-8">Hledat</button>
-                </div>
-            </div>
-            <div id="market-list" class="space-y-4">
-                <p class="text-xs text-gray-500 uppercase tracking-widest">Aktivní nabídky</p>
-                <div class="p-4 bg-[#1b2838] border border-white/5 rounded flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] text-sky-500 font-bold uppercase">Demo Uživatel</p>
-                        <p class="text-sm font-bold text-white italic">Nabízí: Black Myth: Wukong</p>
-                    </div>
-                    <button class="text-[10px] font-bold border border-white/20 px-4 py-2 rounded hover:bg-white/5">Napsat</button>
-                </div>
-            </div>
-        </div>
-    </main>
+        // Volání reálných dat
+        const games = await fetchSteamGames(steamId);
 
-    <script>
-        // TVŮJ API KLÍČ ZE SCREENSHOTU
-        const API_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
-
-        function showPage(id) {
-            document.querySelectorAll('#page-auth, #page-library, #page-market').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + id).classList.remove('hidden');
+        if (games && games.length > 0) {
+            document.getElementById('page-auth').classList.add('hidden');
+            document.getElementById('nav-links').classList.remove('hidden');
+            showPage('library');
+            renderLibrary(games);
+            initMarket(); // Načte ukázkový marketplace
+        } else {
+            alert("Nepodařilo se načíst hry. Zkontroluj, zda máš profil a detaily o hrách nastaveny jako VEŘEJNÉ (Public).");
+            btn.innerText = "Zkusit znovu";
+            btn.disabled = false;
         }
+    }
 
-        async function handleLogin() {
-            const steamId = document.getElementById('steam-id-input').value.trim();
-            if (steamId.length < 15) return alert("Zadej platné SteamID64");
+    // --- MODULE: STEAM API FETCH ---
+    async function fetchSteamGames(steamId) {
+        const steamUrl = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${API_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
+        
+        try {
+            const response = await fetch(proxy + encodeURIComponent(steamUrl));
+            const data = await response.json();
+            const contents = JSON.parse(data.contents);
 
-            const btn = document.getElementById('auth-btn');
-            btn.innerText = "Načítám knihovnu...";
-            btn.disabled = true;
-
-            const games = await getSteamGames(steamId);
-            
-            if (games.length > 0) {
-                document.getElementById('nav-links').classList.remove('hidden');
-                showPage('library');
-                renderLibrary(games);
-            } else {
-                alert("Nepodařilo se načíst hry. Zkontroluj, zda máš profil a hry nastaveny jako 'Veřejné'.");
-                btn.innerText = "Zkusit znovu";
-                btn.disabled = false;
+            if (contents.response && contents.response.games) {
+                return contents.response.games; // Vrátí pole her
             }
+            return [];
+        } catch (e) {
+            console.error("Chyba API:", e);
+            return [];
         }
+    }
 
-        async function getSteamGames(steamId) {
-            // Používáme proxy k obejití CORS blokace
-            const proxy = "https://api.allorigins.win/get?url=";
-            const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${API_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
-            
-            try {
-                const response = await fetch(proxy + encodeURIComponent(url));
-                const data = await response.json();
-                const result = JSON.parse(data.contents);
-                
-                return result.response.games || [];
-            } catch (err) {
-                console.error("Chyba při volání Steamu:", err);
-                return [];
-            }
-        }
+    // --- MODULE: RENDER ---
+    function renderLibrary(games) {
+        const grid = document.getElementById('library-grid');
+        document.getElementById('lib-count').innerText = `${games.length} HER NALEZENO`;
+        
+        grid.innerHTML = games.map(g => `
+            <div class="game-card">
+                <img class="game-img" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg" 
+                     onerror="this.src='https://via.placeholder.com/460x215?text=${g.name}'">
+                <p class="text-[10px] font-bold truncate text-white uppercase tracking-tighter">${g.name}</p>
+            </div>
+        `).join('');
+    }
 
-        function renderLibrary(games) {
-            const grid = document.getElementById('library-grid');
-            document.getElementById('game-count').innerText = `${games.length} HER NAČTENO`;
+    // --- MODULE: MARKETPLACE (UKÁZKA) ---
+    function initMarket() {
+        const list = document.getElementById('market-list');
+        const data = [
+            { u: "Uživatel_88", has: "Black Myth: Wukong", wants: "Cyberpunk" },
+            { u: "Gamer_X", has: "Rust", wants: "DayZ" }
+        ];
 
-            grid.innerHTML = games.map(game => `
-                <div class="game-card">
-                    <img class="w-full rounded mb-2 shadow-lg" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=No+Image'">
-                    <p class="text-[10px] font-bold text-white truncate px-1 uppercase tracking-tighter">${game.name}</p>
+        list.innerHTML = data.map(item => `
+            <div class="market-item p-5 flex justify-between items-center rounded border border-white/5 mb-2">
+                <div>
+                    <p class="text-[9px] text-sky-500 font-black uppercase">${item.u}</p>
+                    <p class="text-sm font-bold text-white">Má: ${item.has}</p>
+                    <p class="text-xs text-gray-400">Chce: ${item.wants}</p>
                 </div>
-            `).join('');
-        }
-    </script>
-</body>
-</html>
+                <button class="bg-white/5 text-[10px] px-4 py-2 rounded uppercase font-bold">Domluvit</button>
+            </div>
+        `).join('');
+    }
+</script>
