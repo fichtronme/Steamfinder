@@ -8,9 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --s-dark: #171a21; --s-blue: #1b2838; --s-accent: #66c0f4; }
-        body { background-color: var(--s-dark); color: #c7d5e0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--s-dark); color: #c7d5e0; font-family: 'Inter', sans-serif; margin: 0; }
         .steam-card { background: #1b2838; border: 1px solid rgba(102,192,244,0.1); border-radius: 4px; }
-        .btn-main { background: var(--s-accent); color: #171a21; font-weight: 900; text-transform: uppercase; transition: 0.2s; cursor: pointer; }
+        .btn-main { background: var(--s-accent); color: #171a21; font-weight: 900; text-transform: uppercase; transition: 0.2s; cursor: pointer; border: none; }
         .btn-main:hover { filter: brightness(1.1); transform: scale(1.02); }
         .game-card { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; text-align: center; }
         .game-card:hover { border-color: var(--s-accent); }
@@ -38,17 +38,13 @@
                     <input id="steam-id-input" type="text" placeholder="7656119XXXXXXXXXX" class="w-full bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500">
                 </div>
                 <button id="auth-btn" onclick="handleLogin()" class="btn-main w-full py-3 rounded">Načíst všechny hry</button>
-                <p class="text-[10px] text-center text-gray-500 italic">Zobrazíme kompletní seznam tvých her bez omezení.</p>
             </div>
         </div>
 
         <div id="page-library" class="hidden">
             <div class="flex justify-between items-end mb-8 border-b border-white/5 pb-4">
-                <div>
-                    <h2 class="text-2xl font-black text-white uppercase italic leading-none">Moje Kompletní Knihovna</h2>
-                    <p class="text-[10px] text-gray-500 uppercase mt-1">Zobrazeny všechny nalezené tituly</p>
-                </div>
-                <span id="lib-count" class="text-sky-500 text-xs font-bold tracking-widest">0 HER</span>
+                <h2 class="text-2xl font-black text-white uppercase italic leading-none">Moje Hry</h2>
+                <span id="lib-count" class="text-sky-500 text-xs font-bold tracking-widest uppercase">0 her nalezeno</span>
             </div>
             <div id="library-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         </div>
@@ -60,8 +56,7 @@
                     <input id="search-input" type="text" oninput="handleSearch()" placeholder="Zadej název hry..." class="flex-grow bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500">
                 </div>
             </div>
-            <div id="market-list" class="space-y-4">
-                </div>
+            <div id="market-list" class="space-y-4"></div>
         </div>
     </main>
 
@@ -69,7 +64,7 @@
         const API_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
         const proxy = "https://api.allorigins.win/get?url=";
 
-        // UKÁZKOVÁ DATABÁZE (Zatím ruční seznam pro vyhledávání)
+        // Testovací databáze hráčů
         let playersDatabase = [
             { name: "Pepa_Gamer", games: ["Counter-Strike 2", "Elden Ring", "Dota 2"], id: "76561198084057351" },
             { name: "Alena_CZ", games: ["The Sims 4", "Cyberpunk 2077", "Roblox"], id: "76561198084057351" },
@@ -77,7 +72,9 @@
         ];
 
         function showPage(id) {
-            document.querySelectorAll('#page-auth, #page-library, #page-market').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-auth').classList.add('hidden');
+            document.getElementById('page-library').classList.add('hidden');
+            document.getElementById('page-market').classList.add('hidden');
             document.getElementById('page-' + id).classList.remove('hidden');
         }
 
@@ -86,41 +83,35 @@
             if (steamId.length < 15) return alert("Zadej platné SteamID64");
 
             const btn = document.getElementById('auth-btn');
-            btn.innerText = "Stahuji data ze Steamu...";
+            btn.innerText = "Stahuji data...";
             btn.disabled = true;
 
-            const games = await fetchSteamGames(steamId);
-            
-            if (games && games.length > 0) {
-                document.getElementById('nav-links').classList.remove('hidden');
-                showPage('library');
-                renderLibrary(games);
-                renderMarketplace(playersDatabase); 
-            } else {
-                alert("Žádné hry nebyly nalezeny. Ujisti se, že máš profil VEŘEJNÝ.");
-                btn.innerText = "Zkusit znovu";
-                btn.disabled = false;
-            }
-        }
-
-        async function fetchSteamGames(steamId) {
-            const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${API_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
             try {
+                const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${API_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
                 const response = await fetch(proxy + encodeURIComponent(url));
                 const data = await response.json();
                 const contents = JSON.parse(data.contents);
-                return contents.response.games || [];
+                const games = contents.response.games || [];
+
+                if (games.length > 0) {
+                    document.getElementById('nav-links').classList.remove('hidden');
+                    showPage('library');
+                    renderLibrary(games);
+                    renderMarketplace(playersDatabase);
+                } else {
+                    alert("Žádné hry nenalezeny. Máš profil nastavený jako Public?");
+                    btn.innerText = "Zkusit znovu";
+                    btn.disabled = false;
+                }
             } catch (err) {
-                console.error(err);
-                return [];
+                alert("Chyba při komunikaci se Steamem.");
+                btn.disabled = false;
             }
         }
 
         function renderLibrary(games) {
             const grid = document.getElementById('library-grid');
-            document.getElementById('lib-count').innerText = `${games.length} HER CELKEM`;
-
-            // ŽÁDNÝ FILTR - zobrazujeme vše, co API vrátilo
+            document.getElementById('lib-count').innerText = `${games.length} HER NALEZENO`;
             grid.innerHTML = games.map(g => `
                 <div class="game-card">
                     <img class="w-full rounded mb-2 shadow-lg" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=${encodeURIComponent(g.name)}'">
@@ -140,17 +131,16 @@
         function renderMarketplace(data) {
             const list = document.getElementById('market-list');
             if (data.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-500 py-10">Tuto hru zatím nikdo nenabízí.</p>';
+                list.innerHTML = '<p class="text-center text-gray-500 py-10 uppercase font-bold">Tuto hru zatím nikdo nenabízí.</p>';
                 return;
             }
-
             list.innerHTML = data.map(p => `
                 <div class="p-4 bg-[#1b2838] border border-white/5 rounded flex justify-between items-center hover:border-sky-500/30 transition">
                     <div>
                         <p class="text-[9px] text-sky-500 font-black uppercase">${p.name}</p>
-                        <p class="text-sm font-bold text-white uppercase italic">Má v knihovně: ${p.games.slice(0, 3).join(', ')}...</p>
+                        <p class="text-sm font-bold text-white uppercase italic">Hry: ${p.games.slice(0, 3).join(', ')}...</p>
                     </div>
-                    <button onclick="window.open('https://steamcommunity.com/profiles/${p.id}')" class="text-[10px] font-bold border border-white/20 px-4 py-2 rounded hover:bg-white/10 uppercase transition">Profil</button>
+                    <button onclick="window.open('https://steamcommunity.com/profiles/${p.id}')" class="text-[10px] font-bold border border-white/20 px-4 py-2 rounded hover:bg-white/10 uppercase transition text-white">Profil</button>
                 </div>
             `).join('');
         }
