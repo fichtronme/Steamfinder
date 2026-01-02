@@ -3,170 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteamFamily Finder | Global</title>
+    <title>SteamFamily Finder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
-        /* --- 1. GLOBAL & CSS VARIABLES --- */
         :root { --s-dark: #171a21; --s-blue: #1b2838; --s-accent: #66c0f4; }
-        body { background-color: var(--s-dark); color: #c7d5e0; font-family: 'Inter', sans-serif; margin: 0; }
+        body { background-color: var(--s-dark); color: #c7d5e0; font-family: 'Inter', sans-serif; }
         .steam-card { background: #1b2838; border: 1px solid rgba(102,192,244,0.1); border-radius: 4px; }
-        .hidden { display: none !important; }
-
-        /* --- 2. MENU CSS --- */
-        .main-nav { border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(27, 40, 56, 0.9); backdrop-blur: 10px; sticky: top; z-index: 100; }
-        .nav-btn { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; padding: 10px 15px; }
-        .nav-btn:hover { color: var(--s-accent); }
-
-        /* --- 3. LIBRARY CSS --- */
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .game-card { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; text-align: center; }
-        .game-card:hover { border-color: var(--s-accent); transform: translateY(-3px); }
-        .game-img { width: 100%; border-radius: 2px; margin-bottom: 8px; background: #000; aspect-ratio: 460/215; object-fit: cover; }
-
-        /* --- 4. MARKETPLACE CSS --- */
-        .market-item { background: linear-gradient(90deg, #1b2838 0%, #101822 100%); border-left: 3px solid var(--s-accent); }
-        .btn-main { background: var(--s-accent); color: #171a21; font-weight: 900; text-transform: uppercase; border-radius: 2px; transition: 0.2s; }
+        .btn-main { background: var(--s-accent); color: #171a21; font-weight: 900; text-transform: uppercase; transition: 0.2s; }
         .btn-main:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .game-card { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; text-align: center; }
+        .game-card:hover { border-color: var(--s-accent); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <nav class="main-nav">
+    <nav class="border-b border-white/5 bg-[#1b2838]/90 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-black text-white tracking-tighter cursor-pointer" onclick="location.reload()">
-                STEAM<span class="text-sky-500">FAMILY</span>
-            </h1>
-            <div id="nav-links" class="hidden flex gap-4">
-                <button class="nav-btn" onclick="showPage('library')">My Library</button>
-                <button class="nav-btn" onclick="showPage('market')">Marketplace</button>
-                <button class="nav-btn opacity-30" onclick="location.reload()">Logout</button>
+            <h1 class="text-2xl font-black text-white cursor-pointer" onclick="location.reload()">STEAM<span class="text-sky-500">FAMILY</span></h1>
+            <div id="nav-links" class="hidden flex gap-6 text-[10px] font-black uppercase tracking-widest text-white">
+                <button onclick="showPage('library')">Knihovna</button>
+                <button onclick="showPage('market')">Marketplace</button>
             </div>
         </div>
     </nav>
 
     <main class="max-w-6xl mx-auto p-6">
-
-        <div id="page-auth" class="page max-w-md mx-auto py-20">
+        <div id="page-auth" class="max-w-md mx-auto py-20">
             <div class="steam-card p-8 space-y-6 shadow-2xl">
-                <h2 class="text-2xl font-bold text-white uppercase italic italic text-center">Connect Account</h2>
+                <h2 class="text-xl font-bold text-white uppercase text-center italic">Propojit knihovnu</h2>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-sky-500 tracking-widest">SteamID64</label>
+                    <label class="text-[10px] font-black uppercase text-sky-500">Zadej SteamID64</label>
                     <input id="steam-id-input" type="text" placeholder="7656119XXXXXXXXXX" class="w-full bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500">
                 </div>
-                <button onclick="handleLogin()" class="btn-main w-full py-3">Enter System</button>
-                
-                <div class="bg-black/20 p-4 rounded text-[11px] space-y-3">
-                    <p class="font-bold text-sky-500 uppercase">How to find your ID?</p>
-                    <p class="text-gray-400 leading-relaxed">
-                        1. Open Steam App on PC.<br>
-                        2. Click Name (top right) > <b>Account Details</b>.<br>
-                        3. Your <b>Steam ID</b> is in gray under your name.
-                    </p>
-                    <a href="https://youtu.be/Wk9DBwkkbR0" target="_blank" class="text-white underline block">Watch Video Guide ➔</a>
+                <button id="auth-btn" onclick="handleLogin()" class="btn-main w-full py-3">Načíst hry</button>
+                <div class="bg-black/20 p-4 rounded text-[11px] text-gray-400">
+                    <p class="text-sky-500 font-bold mb-1">DŮLEŽITÉ:</p>
+                    Profil i "Detaily o hrách" musí být nastaveny jako <b>Veřejné</b> v nastavení soukromí Steamu.
                 </div>
             </div>
         </div>
 
-        <div id="page-library" class="page hidden animate-fadeIn">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-black text-white uppercase italic">My Collection</h2>
-                <span id="lib-count" class="bg-sky-500/10 text-sky-500 text-[10px] font-black px-3 py-1 rounded-full border border-sky-500/20 tracking-widest">0 GAMES</span>
+        <div id="page-library" class="hidden">
+            <div class="flex justify-between items-end mb-8">
+                <h2 class="text-2xl font-black text-white uppercase italic">Moje hry ke sdílení</h2>
+                <span id="game-count" class="text-sky-500 text-xs font-bold tracking-widest">0 HER NAJEDNO</span>
             </div>
-            <div id="library-grid" class="game-grid">
-                </div>
+            <div id="library-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         </div>
 
-        <div id="page-market" class="page hidden animate-fadeIn space-y-8">
-            <div class="steam-card p-8 border-sky-500/20">
-                <h2 class="text-2xl font-black text-white uppercase italic mb-4">Request a Game</h2>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <input id="req-input" type="text" placeholder="What game are you looking for?" class="flex-grow bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none">
-                    <button onclick="postRequest()" class="btn-main px-10 py-3">Post</button>
+        <div id="page-market" class="hidden">
+            <div class="steam-card p-6 mb-8 border-sky-500/20">
+                <h2 class="text-xl font-bold text-white mb-4 italic uppercase">Hledat ve skupině</h2>
+                <div class="flex gap-3">
+                    <input id="search-input" type="text" placeholder="Jakou hru hledáš?" class="flex-grow bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none">
+                    <button class="btn-main px-8">Hledat</button>
                 </div>
             </div>
-
-            <div class="space-y-4">
-                <h3 class="text-xs font-bold text-white/30 uppercase tracking-widest">Live Trade Feed</h3>
-                <div id="market-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="market-list" class="space-y-4">
+                <p class="text-xs text-gray-500 uppercase tracking-widest">Aktivní nabídky</p>
+                <div class="p-4 bg-[#1b2838] border border-white/5 rounded flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] text-sky-500 font-bold uppercase">Demo Uživatel</p>
+                        <p class="text-sm font-bold text-white italic">Nabízí: Black Myth: Wukong</p>
                     </div>
+                    <button class="text-[10px] font-bold border border-white/20 px-4 py-2 rounded hover:bg-white/5">Napsat</button>
+                </div>
             </div>
         </div>
-
     </main>
 
     <script>
-        // --- MODULE: ROUTING ---
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + pageId).classList.remove('hidden');
+        // TVŮJ API KLÍČ ZE SCREENSHOTU
+        const API_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
+
+        function showPage(id) {
+            document.querySelectorAll('#page-auth, #page-library, #page-market').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + id).classList.remove('hidden');
         }
 
-        // --- MODULE: AUTH ---
         async function handleLogin() {
-            const id = document.getElementById('steam-id-input').value.trim();
-            if (id.length < 15) return alert("Please enter a valid 17-digit SteamID64");
+            const steamId = document.getElementById('steam-id-input').value.trim();
+            if (steamId.length < 15) return alert("Zadej platné SteamID64");
 
-            // UI Switch
-            document.getElementById('page-auth').classList.add('hidden');
-            document.getElementById('nav-links').classList.remove('hidden');
-            showPage('library');
+            const btn = document.getElementById('auth-btn');
+            btn.innerText = "Načítám knihovnu...";
+            btn.disabled = true;
 
-            // Load components
-            initLibrary(id);
-            initMarket();
+            const games = await getSteamGames(steamId);
+            
+            if (games.length > 0) {
+                document.getElementById('nav-links').classList.remove('hidden');
+                showPage('library');
+                renderLibrary(games);
+            } else {
+                alert("Nepodařilo se načíst hry. Zkontroluj, zda máš profil a hry nastaveny jako 'Veřejné'.");
+                btn.innerText = "Zkusit znovu";
+                btn.disabled = false;
+            }
         }
 
-        // --- MODULE: LIBRARY ---
-        function initLibrary(steamId) {
+        async function getSteamGames(steamId) {
+            // Používáme proxy k obejití CORS blokace
+            const proxy = "https://api.allorigins.win/get?url=";
+            const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${API_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
+            
+            try {
+                const response = await fetch(proxy + encodeURIComponent(url));
+                const data = await response.json();
+                const result = JSON.parse(data.contents);
+                
+                return result.response.games || [];
+            } catch (err) {
+                console.error("Chyba při volání Steamu:", err);
+                return [];
+            }
+        }
+
+        function renderLibrary(games) {
             const grid = document.getElementById('library-grid');
-            
-            // NOTE: This is where we will call the Steam API in the next step.
-            // Currently using fallback data to show the design.
-            const games = [
-                { n: "Elden Ring", id: "1245620" },
-                { n: "Black Myth: Wukong", id: "2358720" },
-                { n: "Cyberpunk 2077", id: "1091500" },
-                { n: "Hogwarts Legacy", id: "1446780" },
-                { n: "Counter-Strike 2", id: "730" }
-            ];
+            document.getElementById('game-count').innerText = `${games.length} HER NAČTENO`;
 
-            document.getElementById('lib-count').innerText = games.length + " GAMES FOUND";
-            
-            grid.innerHTML = games.map(g => `
+            grid.innerHTML = games.map(game => `
                 <div class="game-card">
-                    <img class="game-img" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.id}/header.jpg" alt="Game">
-                    <p class="text-[10px] font-bold truncate text-white uppercase tracking-tighter">${g.n}</p>
+                    <img class="w-full rounded mb-2 shadow-lg" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=No+Image'">
+                    <p class="text-[10px] font-bold text-white truncate px-1 uppercase tracking-tighter">${game.name}</p>
                 </div>
             `).join('');
-        }
-
-        // --- MODULE: MARKETPLACE ---
-        function initMarket() {
-            const list = document.getElementById('market-list');
-            const data = [
-                { u: "User_992", has: "Baldur's Gate 3", wants: "Elden Ring" },
-                { u: "Gamer_CZ", has: "Rust", wants: "DayZ" }
-            ];
-
-            list.innerHTML = data.map(item => `
-                <div class="market-item p-5 flex justify-between items-center rounded">
-                    <div>
-                        <p class="text-[9px] text-sky-500 font-black uppercase mb-1">${item.u}</p>
-                        <p class="text-sm font-bold text-white">Has: ${item.has}</p>
-                        <p class="text-xs text-gray-400">Wants: ${item.wants}</p>
-                    </div>
-                    <button class="bg-white/5 hover:bg-white/10 text-[10px] font-bold px-4 py-2 rounded uppercase tracking-widest transition">Negotiate</button>
-                </div>
-            `).join('');
-        }
-
-        function postRequest() {
-            const val = document.getElementById('req-input').value;
-            if(!val) return;
-            alert(`Your request for "${val}" has been added to the global marketplace!`);
-            document.getElementById('req-input').value = "";
         }
     </script>
 </body>
