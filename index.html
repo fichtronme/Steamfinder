@@ -35,6 +35,7 @@
                 <h2 class="text-xl font-bold text-white uppercase italic">Sdílet knihovnu</h2>
                 <input id="steam-id-input" type="text" placeholder="Zadej SteamID64" class="w-full bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500 text-center">
                 <button id="auth-btn" onclick="handleLogin()" class="btn-main w-full py-3 rounded text-sm">Načíst a uložit</button>
+                <p class="text-[10px] text-gray-500">Profil musí být nastaven jako VEŘEJNÝ.</p>
             </div>
         </div>
 
@@ -59,97 +60,95 @@
         const STEAM_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
         const PROXY = "https://api.allorigins.win/get?url=";
         
-        // Použito URL z tvého screenshotu verze 3
-<script>
-    const STEAM_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
-    const PROXY = "https://api.allorigins.win/get?url=";
-    
-    // Použito tvé nové URL z Verze 4 (screenshot image_faa154.png)
-    const DATABASE_URL = "https://script.google.com/macros/s/AKfycbuZ-TNuvjdLSVhFKhmUdg0-TmSOPAN5l7__POglsi5wg5r2UjpzQxDTlZ0E9OhRluWcb/exec";
+        // URL pro Verzi 5 ze screenshotu image_faa590.png
+        const DATABASE_URL = "https://script.google.com/macros/s/AKfybyvDzV5dGpbHgj3DK7PqcnyoYqzNUGvhC6wp1QY2zcEzVcbyZjLR04r3kXGlhRCmR/exec";
 
-    let allPlayers = [];
+        let allPlayers = [];
 
-    function showPage(id) {
-        document.querySelectorAll('#page-auth, #page-library, #page-market').forEach(p => p.classList.add('hidden'));
-        document.getElementById('page-' + id).classList.remove('hidden');
-    }
-
-    async function handleLogin() {
-        const steamId = document.getElementById('steam-id-input').value.trim();
-        if (steamId.length < 15) return alert("Zadej platné SteamID64");
-
-        const btn = document.getElementById('auth-btn');
-        btn.innerText = "PRACUJI..."; btn.disabled = true;
-
-        try {
-            // 1. Načtení her ze Steamu
-            const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
-            const response = await fetch(PROXY + encodeURIComponent(url));
-            const data = await response.json();
-            const games = JSON.parse(data.contents).response.games || [];
-
-            if (games.length === 0) throw new Error("Private");
-
-            // 2. ODESLÁNÍ DO TABULKY (Trik pro obejití CORS)
-            const payload = { 
-                name: "Hráč_" + steamId.slice(-4), 
-                id: steamId, 
-                games: games.map(g => g.name) 
-            };
-            
-            // Data posíláme jako parametr v URL, což prohlížeč nezablokuje
-            const saveUrl = DATABASE_URL + "?data=" + encodeURIComponent(JSON.stringify(payload));
-            await fetch(saveUrl, { mode: 'no-cors' });
-
-            // 3. Načtení celé databáze pro Marketplace
-            const dbRes = await fetch(DATABASE_URL);
-            allPlayers = await dbRes.json();
-
-            document.getElementById('nav-links').classList.remove('hidden');
-            showPage('library');
-            renderLibrary(games);
-            renderMarketplace(allPlayers);
-        } catch (err) {
-            console.error(err);
-            alert("Chyba: Profil musí být VEŘEJNÝ a SteamID správné!");
-            btn.innerText = "Zkusit znovu"; btn.disabled = false;
+        function showPage(id) {
+            document.querySelectorAll('#page-auth, #page-library, #page-market').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + id).classList.remove('hidden');
         }
-    }
 
-    function renderLibrary(games) {
-        const grid = document.getElementById('library-grid');
-        document.getElementById('lib-count').innerText = `${games.length} HER`;
-        grid.innerHTML = games.map(g => `
-            <div class="game-card">
-                <img class="w-full rounded mb-2 shadow-lg" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=${encodeURIComponent(g.name)}'">
-                <p class="text-[9px] font-bold text-white truncate uppercase">${g.name}</p>
-            </div>
-        `).join('');
-    }
+        async function handleLogin() {
+            const steamId = document.getElementById('steam-id-input').value.trim();
+            if (steamId.length < 15) return alert("Zadej platné SteamID64");
 
-    function handleSearch() {
-        const query = document.getElementById('search-input').value.toLowerCase();
-        const filtered = allPlayers.filter(p => p.games.some(g => g.toLowerCase().includes(query)));
-        renderMarketplace(filtered);
-    }
+            const btn = document.getElementById('auth-btn');
+            btn.innerText = "PRACUJI..."; btn.disabled = true;
 
-    function renderMarketplace(data) {
-        const list = document.getElementById('market-list');
-        if (!data || data.length === 0) {
-            list.innerHTML = '<p class="text-center py-10 opacity-50 uppercase text-xs">V databázi zatím nikdo není</p>';
-            return;
+            try {
+                // 1. Získání dat ze Steamu
+                const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
+                const response = await fetch(PROXY + encodeURIComponent(url));
+                const data = await response.json();
+                const games = JSON.parse(data.contents).response.games || [];
+
+                if (games.length === 0) throw new Error("Private");
+
+                // 2. Příprava dat pro Google Tabulku
+                const payload = { 
+                    name: "Hráč_" + steamId.slice(-4), 
+                    id: steamId, 
+                    games: games.map(g => g.name) 
+                };
+                
+                // 3. ULOŽENÍ DO TABULKY (Předání dat přes URL parametr pro tvůj nový doGet)
+                const saveUrl = DATABASE_URL + "?data=" + encodeURIComponent(JSON.stringify(payload));
+                
+                // Použijeme no-cors režim, abychom ignorovali případné blokování odpovědi prohlížečem
+                await fetch(saveUrl, { mode: 'no-cors' });
+
+                // 4. Načtení celé aktualizované databáze pro Marketplace
+                const dbRes = await fetch(DATABASE_URL);
+                allPlayers = await dbRes.json();
+
+                // Přepnutí stránek
+                document.getElementById('nav-links').classList.remove('hidden');
+                showPage('library');
+                renderLibrary(games);
+                renderMarketplace(allPlayers);
+
+            } catch (err) {
+                console.error(err);
+                alert("CHYBA: Zkontroluj, zda je tvůj Steam profil a seznam her VEŘEJNÝ!");
+                btn.innerText = "ZKUSIT ZNOVU"; btn.disabled = false;
+            }
         }
-        list.innerHTML = data.map(p => `
-            <div class="p-4 bg-[#1b2838] border border-white/5 rounded flex justify-between items-center hover:border-sky-500/30 transition">
-                <div>
-                    <p class="text-[9px] text-sky-500 font-black uppercase tracking-tighter">${p.name}</p>
-                    <p class="text-sm font-bold text-white uppercase italic">${p.games.length} her</p>
+
+        function renderLibrary(games) {
+            const grid = document.getElementById('library-grid');
+            document.getElementById('lib-count').innerText = `${games.length} HER`;
+            grid.innerHTML = games.map(g => `
+                <div class="game-card">
+                    <img class="w-full rounded mb-2 shadow-lg" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=${encodeURIComponent(g.name)}'">
+                    <p class="text-[9px] font-bold text-white truncate uppercase">${g.name}</p>
                 </div>
-                <button onclick="window.open('https://steamcommunity.com/profiles/${p.id}')" class="text-[10px] font-black border border-white/20 px-4 py-2 rounded text-white uppercase tracking-widest hover:bg-white/10 transition">Profil</button>
-            </div>
-        `).join('');
-    }
-</script>
+            `).join('');
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allPlayers.filter(p => p.games.some(g => g.toLowerCase().includes(query)));
+            renderMarketplace(filtered);
+        }
+
+        function renderMarketplace(data) {
+            const list = document.getElementById('market-list');
+            if (!data || data.length === 0) {
+                list.innerHTML = '<p class="text-center py-10 opacity-50 uppercase text-xs">V databázi zatím nikdo není</p>';
+                return;
+            }
+            list.innerHTML = data.map(p => `
+                <div class="p-4 bg-[#1b2838] border border-white/5 rounded flex justify-between items-center hover:border-sky-500/30 transition">
+                    <div>
+                        <p class="text-[9px] text-sky-500 font-black uppercase tracking-tighter">${p.name}</p>
+                        <p class="text-sm font-bold text-white uppercase italic">${p.games.length} her</p>
+                    </div>
+                    <button onclick="window.open('https://steamcommunity.com/profiles/${p.id}')" class="text-[10px] font-black border border-white/20 px-4 py-2 rounded text-white uppercase tracking-widest hover:bg-white/10 transition">Profil</button>
+                </div>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
-
