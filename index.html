@@ -32,9 +32,9 @@
     <main class="max-w-6xl mx-auto p-6">
         <div id="page-auth" class="max-w-md mx-auto py-20">
             <div class="steam-card p-8 space-y-6 shadow-2xl text-center">
-                <h2 class="text-xl font-bold text-white uppercase italic">Vstoupit do Family</h2>
-                <input id="steam-id-input" type="text" placeholder="Vlož SteamID64 (765...)" class="w-full bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500 text-center">
-                <button id="auth-btn" onclick="handleLogin()" class="btn-main w-full py-3 rounded text-sm">Načíst a sdílet hry</button>
+                <h2 class="text-xl font-bold text-white uppercase italic">Sdílet knihovnu</h2>
+                <input id="steam-id-input" type="text" placeholder="Zadej SteamID64" class="w-full bg-[#101822] border border-[#2a475e] p-3 rounded text-white outline-none focus:border-sky-500 text-center">
+                <button id="auth-btn" onclick="handleLogin()" class="btn-main w-full py-3 rounded text-sm">Načíst a uložit</button>
             </div>
         </div>
 
@@ -58,8 +58,9 @@
     <script>
         const STEAM_KEY = "B11F82587E3FE85D24EC3AE5EDD62B68";
         const PROXY = "https://api.allorigins.win/get?url=";
-        // URL vloženo z tvého screenshotu:
-        const DATABASE_URL = "https://script.google.com/macros/s/AKfycbyARsQcGYl01RhUW9Gp5dX7gg9T1X2RcTtxOdK6-nQg6KxuO6xS4B3SpRz8NewLvGp1/exec";
+        
+        // Použito URL z tvého screenshotu verze 3
+        const DATABASE_URL = "https://script.google.com/macros/s/AKfycbuUDbPDF3UAwJmm7tDLzypr4r0zLEwcjhF_UwcAdDrpDxELjlU2eZaPdwmKuBNVVWMo/exec";
 
         let allPlayers = [];
 
@@ -73,8 +74,7 @@
             if (steamId.length < 15) return alert("Zadej platné SteamID64");
 
             const btn = document.getElementById('auth-btn');
-            btn.innerText = "UKLÁDÁM DO DATABÁZE...";
-            btn.disabled = true;
+            btn.innerText = "PRACUJI..."; btn.disabled = true;
 
             try {
                 const url = `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${steamId}&include_appinfo=1&format=json`;
@@ -84,14 +84,16 @@
 
                 if (games.length === 0) throw new Error("Private");
 
-                // Uložení tvých dat
+                // Odeslání do tabulky
+                const payload = { name: "Hráč_" + steamId.slice(-4), id: steamId, games: games.map(g => g.name) };
                 await fetch(DATABASE_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.stringify({ name: "Hráč_" + steamId.slice(-4), id: steamId, games: games.map(g => g.name) })
+                    cache: 'no-cache',
+                    body: JSON.stringify(payload)
                 });
 
-                // Načtení všech lidí z tabulky
+                // Načtení databáze
                 const dbRes = await fetch(DATABASE_URL);
                 allPlayers = await dbRes.json();
 
@@ -101,8 +103,7 @@
                 renderMarketplace(allPlayers);
             } catch (err) {
                 alert("Chyba: Profil musí být VEŘEJNÝ!");
-                btn.innerText = "Zkusit znovu";
-                btn.disabled = false;
+                btn.innerText = "Zkusit znovu"; btn.disabled = false;
             }
         }
 
@@ -111,8 +112,8 @@
             document.getElementById('lib-count').innerText = `${games.length} HER`;
             grid.innerHTML = games.map(g => `
                 <div class="game-card">
-                    <img class="w-full rounded mb-2" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=${encodeURIComponent(g.name)}'">
-                    <p class="text-[9px] font-bold text-white truncate px-1 uppercase">${g.name}</p>
+                    <img class="w-full rounded mb-2 shadow-lg" src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg" onerror="this.src='https://via.placeholder.com/460x215?text=${encodeURIComponent(g.name)}'">
+                    <p class="text-[9px] font-bold text-white truncate uppercase">${g.name}</p>
                 </div>
             `).join('');
         }
@@ -125,13 +126,13 @@
 
         function renderMarketplace(data) {
             const list = document.getElementById('market-list');
-            list.innerHTML = data.map(p => `
+            list.innerHTML = data.length === 0 ? '<p class="text-center py-10 opacity-50">Databáze se načítá nebo je prázdná...</p>' : data.map(p => `
                 <div class="p-4 bg-[#1b2838] border border-white/5 rounded flex justify-between items-center hover:border-sky-500/30 transition">
                     <div>
-                        <p class="text-[9px] text-sky-500 font-black uppercase">Uživatel: ${p.name}</p>
-                        <p class="text-sm font-bold text-white italic uppercase">${p.games.length} her</p>
+                        <p class="text-[9px] text-sky-500 font-black uppercase tracking-tighter">${p.name}</p>
+                        <p class="text-sm font-bold text-white uppercase italic">${p.games.length} her</p>
                     </div>
-                    <button onclick="window.open('https://steamcommunity.com/profiles/${p.id}')" class="text-[10px] font-bold border border-white/20 px-4 py-2 rounded text-white uppercase tracking-widest hover:bg-white/10">Profil</button>
+                    <button onclick="window.open('https://steamcommunity.com/profiles/${p.id}')" class="text-[10px] font-black border border-white/20 px-4 py-2 rounded text-white uppercase tracking-widest hover:bg-white/10 transition">Profil</button>
                 </div>
             `).join('');
         }
