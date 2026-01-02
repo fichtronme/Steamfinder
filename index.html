@@ -3,218 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteamFamily Finder | Share Games, Save Money</title>
+    <title>SteamFamily Finder</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
-    <style>
-        :root { --s-dark: #171a21; --s-blue: #1b2838; --s-light: #2a475e; --s-accent: #66c0f4; }
-        body { 
-            background: radial-gradient(circle at top, var(--s-blue) 0%, var(--s-dark) 100%); 
-            color: #c7d5e0; 
-            font-family: 'Inter', sans-serif; 
-            min-height: 100vh; 
-            margin: 0;
-        }
-        .steam-card { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(102, 192, 244, 0.1); border-radius: 8px; }
-        .steam-input { background: #101822; border: 1px solid #2a475e; color: white; padding: 12px; border-radius: 4px; outline: none; }
-        .steam-input:focus { border-color: var(--s-accent); box-shadow: 0 0 15px rgba(102, 192, 244, 0.1); }
-        .btn-accent { background: var(--s-accent); color: #171a21; font-weight: 800; padding: 12px 24px; border-radius: 4px; text-transform: uppercase; transition: 0.2s; cursor: pointer; }
-        .btn-accent:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #2a475e; border-radius: 10px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="p-4 md:p-8">
+<body class="bg-[#171a21] text-[#c7d5e0]">
 
-    <header class="max-w-6xl mx-auto flex justify-between items-center mb-12">
-        <div class="cursor-pointer" onclick="location.reload()">
-            <h1 class="text-3xl font-black tracking-tighter text-white">STEAM<span class="text-sky-500">FAMILY</span></h1>
-            <p class="text-[10px] text-sky-400/60 font-bold tracking-[0.3em] uppercase leading-none">Global Finder</p>
-        </div>
-        <div id="user-status" class="hidden flex items-center gap-4">
-            <div class="text-right">
-                <p id="display-name" class="font-bold text-white text-sm leading-none"></p>
-                <span class="text-[9px] text-green-500 font-black uppercase tracking-widest">Active Session</span>
+    <nav class="border-b border-white/5 bg-[#1b2838]/80 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-black text-white cursor-pointer" onclick="switchPage('landing')">
+                STEAM<span class="text-sky-500">FAMILY</span>
+            </h1>
+            <div id="nav-menu" class="hidden flex gap-6 text-xs font-bold uppercase tracking-widest">
+                <button onclick="switchPage('library')" class="hover:text-white transition">My Library</button>
+                <button onclick="switchPage('market')" class="hover:text-white transition">Marketplace</button>
+                <button onclick="location.reload()" class="opacity-50">Logout</button>
             </div>
-            <button onclick="location.reload()" class="text-[10px] opacity-30 hover:opacity-100 uppercase font-bold border border-white/20 px-2 py-1 rounded">Logout</button>
         </div>
-    </header>
+    </nav>
 
-    <main class="max-w-6xl mx-auto">
+    <main class="max-w-6xl mx-auto p-6">
         
-        <section id="view-login" class="max-w-md mx-auto py-10">
-            <div class="text-center mb-10">
-                <h2 class="text-5xl font-black text-white italic uppercase tracking-tighter mb-4">Find your <br><span class="text-sky-500">Gaming Family</span></h2>
-                <p class="text-gray-400 text-sm">Join the network for Steam Family Sharing. Connect libraries and play for free.</p>
-            </div>
-
-            <div class="steam-card p-8 shadow-2xl space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase text-sky-500 tracking-widest">Enter SteamID64</label>
-                    <input id="steam-id-input" type="text" placeholder="e.g. 7656119xxxxxxxxxx" class="w-full steam-input text-lg font-mono">
-                </div>
+        <section id="page-landing" class="page-view max-w-md mx-auto py-12">
+            <div class="steam-card p-8 space-y-6">
+                <h2 class="text-3xl font-bold text-white text-center italic uppercase">Welcome</h2>
+                <input id="steam-id-input" type="text" placeholder="Enter SteamID64" class="steam-input w-full">
+                <button onclick="handleLogin()" class="btn-accent w-full">Connect Steam</button>
                 
-                <button id="btn-load" onclick="handleLogin()" class="btn-accent w-full text-lg">Load My Library</button>
-
-                <div class="bg-black/40 p-5 rounded-lg border border-white/5 space-y-4">
-                    <h3 class="text-xs font-black uppercase text-white/50 tracking-widest flex items-center gap-2">
-                        <span class="bg-sky-500 text-black w-4 h-4 rounded-full flex items-center justify-center text-[10px]">?</span>
-                        How to find your Steam ID?
-                    </h3>
-                    <div class="text-[11px] text-gray-400 space-y-3 leading-relaxed">
-                        <p>1. Open the <b>Steam App</b> on your PC.</p>
-                        <p>2. Click your <b>Profile Name</b> in the top right corner.</p>
-                        <p>3. Select <b>"Account Details"</b> from the menu.</p>
-                        <p>4. Your <b>Steam ID</b> is listed in gray directly under your name.</p>
-                    </div>
-                    <div class="pt-2 border-t border-white/5">
-                        <a href="https://youtu.be/Wk9DBwkkbR0" target="_blank" class="text-[10px] font-black text-sky-500 hover:underline flex items-center gap-1 uppercase tracking-tighter">
-                            Watch step-by-step video ➔
-                        </a>
-                    </div>
+                <div class="guide-box">
+                    <p class="font-bold text-sky-500 mb-2">HOW TO FIND YOUR ID:</p>
+                    <ul class="text-[10px] space-y-1 opacity-70">
+                        <li>1. Open Steam PC App</li>
+                        <li>2. Click your Name (top right) -> Account Details</li>
+                        <li>3. Copy ID under your name</li>
+                    </ul>
+                    <a href="https://youtu.be/Wk9DBwkkbR0" target="_blank" class="block mt-3 text-white underline">Watch Video Guide</a>
                 </div>
             </div>
         </section>
 
-        <section id="view-dashboard" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-1 space-y-6">
-                <div class="steam-card p-6 text-center" id="user-avatar-placeholder">
-                    <div class="w-24 h-24 bg-sky-900/50 rounded-full mx-auto mb-4 border-2 border-sky-500 flex items-center justify-center text-3xl font-black text-sky-500">?</div>
-                    <h3 id="profile-name-ui" class="text-white font-bold">Steam User</h3>
+        <section id="page-library" class="page-view hidden space-y-6">
+            <div class="flex justify-between items-end">
+                <h2 class="text-2xl font-black text-white uppercase italic">My Games</h2>
+                <span id="game-count" class="text-sky-500 text-xs font-bold">0 GAMES FOUND</span>
+            </div>
+            <div id="library-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 </div>
-                <div class="steam-card p-6">
-                    <h3 class="text-[10px] font-black uppercase text-sky-500 mb-4 tracking-widest">My Shared Library</h3>
-                    <div id="owned-games-list" class="space-y-1 text-xs max-h-[450px] overflow-y-auto pr-2">
-                        <p class="text-gray-500 italic">No games loaded yet...</p>
-                    </div>
+        </section>
+
+        <section id="page-market" class="page-view hidden space-y-8">
+            <div class="steam-card p-8 bg-gradient-to-r from-sky-900/20 to-transparent">
+                <h2 class="text-2xl font-black text-white uppercase italic mb-4">Search & Request</h2>
+                <div class="flex gap-4">
+                    <input id="search-input" type="text" placeholder="What game are you looking for?" class="steam-input flex-grow">
+                    <button onclick="postRequest()" class="btn-accent px-10">Post</button>
                 </div>
             </div>
-
-            <div class="lg:col-span-3 space-y-6">
-                <div class="steam-card p-8 bg-gradient-to-br from-sky-900/20 to-transparent border-sky-500/20">
-                    <h2 class="text-2xl font-black text-white italic uppercase mb-2">I want to play...</h2>
-                    <p class="text-sm text-gray-400 mb-6">Type the game you are looking for. We will show your request to others.</p>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <input id="game-request-input" type="text" placeholder="e.g. Black Myth: Wukong" class="steam-input flex-grow">
-                        <button onclick="postRequest()" class="btn-accent">Post Request</button>
+            
+            <div class="space-y-4">
+                <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest">Global Requests</h3>
+                <div id="market-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     </div>
-                </div>
-
-                <div class="space-y-4">
-                    <h3 class="text-[10px] font-black uppercase text-white/40 tracking-widest">Active Matchmaking Requests</h3>
-                    <div id="requests-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        </div>
-                </div>
             </div>
         </section>
 
-        <div id="chat-modal" class="fixed inset-0 bg-black/95 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-            <div class="w-full max-w-xl h-[600px] steam-card flex flex-col overflow-hidden border-sky-500/40 shadow-2xl">
-                <div class="p-4 bg-sky-900/30 border-b border-white/10 flex justify-between items-center">
-                    <div>
-                        <span class="font-black text-xs uppercase tracking-widest text-white">Family Negotiation</span>
-                        <p id="chat-target-id" class="text-[9px] text-sky-500 font-mono"></p>
-                    </div>
-                    <button onclick="closeChat()" class="text-2xl opacity-50 hover:opacity-100 transition">✕</button>
-                </div>
-                <div id="chat-box" class="flex-grow p-6 overflow-y-auto flex flex-col gap-3 text-sm"></div>
-                <div class="p-4 bg-black/40 flex gap-2">
-                    <input id="chat-msg-input" type="text" placeholder="Propose a deal..." class="steam-input flex-grow">
-                    <button onclick="sendChatMessage()" class="btn-accent px-8">Send</button>
-                </div>
-            </div>
-        </div>
     </main>
 
-    <script>
-        let myId = null;
-
-        async function handleLogin() {
-            const inputId = document.getElementById('steam-id-input').value.trim();
-            if (inputId.length < 15) return alert("Please enter a valid 17-digit SteamID64.");
-
-            const btn = document.getElementById('btn-load');
-            btn.innerText = "Connecting to Steam API...";
-            btn.disabled = true;
-
-            myId = inputId;
-
-            // SIMULATION: Since we don't have a backend yet, we simulate a loading process
-            setTimeout(() => {
-                document.getElementById('view-login').classList.add('hidden');
-                document.getElementById('view-dashboard').classList.remove('hidden');
-                document.getElementById('user-status').classList.remove('hidden');
-                document.getElementById('display-name').innerText = "ID: " + myId;
-                document.getElementById('profile-name-ui').innerText = "User " + myId.substring(0, 5);
-
-                // Sample Games (This will be replaced by real data when backend is ready)
-                const mockGames = ["Elden Ring", "Cyberpunk 2077", "Rust", "Hogwarts Legacy", "Counter-Strike 2"];
-                renderLibrary(mockGames);
-                renderMockRequests();
-            }, 1500);
-        }
-
-        function renderLibrary(games) {
-            const container = document.getElementById('owned-games-list');
-            container.innerHTML = games.map(g => `
-                <div class="p-2 bg-white/5 border border-white/5 rounded flex justify-between items-center group hover:border-sky-500/30 transition mb-1">
-                    <span class="truncate">${g}</span>
-                    <span class="text-[8px] font-black text-sky-500 uppercase opacity-40">Ready</span>
-                </div>
-            `).join('');
-        }
-
-        function renderMockRequests() {
-            const grid = document.getElementById('requests-grid');
-            const mockData = [
-                { id: "76561198034...", has: "Elden Ring", wants: "Black Myth: Wukong" },
-                { id: "76561198211...", has: "Baldur's Gate 3", wants: "Cyberpunk" }
-            ];
-
-            grid.innerHTML = mockData.map(req => `
-                <div class="steam-card p-6 border-white/5 hover:border-sky-500/50 transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[10px] font-black text-sky-500 uppercase tracking-widest">Swap Request</span>
-                            <span class="text-[9px] text-green-500 font-bold italic">Online</span>
-                        </div>
-                        <p class="text-white font-bold text-sm">Has: <span class="text-gray-400 font-normal">${req.has}</span></p>
-                        <p class="text-white font-bold text-sm">Wants: <span class="text-sky-400 font-normal">${req.wants}</span></p>
-                    </div>
-                    <button onclick="openChat('${req.id}')" class="mt-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black py-2 rounded uppercase tracking-widest transition">Negotiate</button>
-                </div>
-            `).join('');
-        }
-
-        function postRequest() {
-            const val = document.getElementById('game-request-input').value.trim();
-            if (!val) return;
-            alert(`Global request for "${val}" has been posted! Matching for your SteamID.`);
-            document.getElementById('game-request-input').value = "";
-        }
-
-        function openChat(id) {
-            document.getElementById('chat-modal').classList.remove('hidden');
-            document.getElementById('chat-target-id').innerText = "PEER: " + id;
-        }
-
-        function closeChat() { document.getElementById('chat-modal').classList.add('hidden'); }
-
-        function sendChatMessage() {
-            const input = document.getElementById('chat-msg-input');
-            const val = input.value.trim();
-            if (!val) return;
-            const box = document.getElementById('chat-box');
-            const msg = document.createElement('div');
-            msg.className = "self-end bg-sky-600 text-white px-4 py-2 rounded-lg max-w-[80%]";
-            msg.innerText = val;
-            box.appendChild(msg);
-            input.value = "";
-            box.scrollTop = box.scrollHeight;
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
